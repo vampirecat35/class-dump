@@ -84,6 +84,57 @@ static NSString *CDMachOFileMagicNumberDescription(uint32_t magic)
     return self;
 }
 
+- (id) initWithMachOData:(const struct mach_header *)data size:(size_t)length
+{
+    if (data == NULL) {
+        return nil;
+    }
+
+    _byteOrder = CDByteOrder_LittleEndian;
+
+    CDDataCursor *cursor = [[CDDataCursor alloc] initWithData:[NSData dataWithBytes:data length:length]];
+    _magic = [cursor readBigInt32];
+    if (_magic == MH_MAGIC || _magic == MH_MAGIC_64) {
+        _byteOrder = CDByteOrder_BigEndian;
+    } else if (_magic == MH_CIGAM || _magic == MH_CIGAM_64) {
+        _byteOrder = CDByteOrder_LittleEndian;
+    } else {
+        return nil;
+    }
+    
+    _uses64BitABI = (_magic == MH_MAGIC_64) || (_magic == MH_CIGAM_64);
+    
+    if (_byteOrder == CDByteOrder_LittleEndian) {
+        _cputype    = [cursor readLittleInt32];
+        _cpusubtype = [cursor readLittleInt32];
+        _filetype   = [cursor readLittleInt32];
+        _ncmds      = [cursor readLittleInt32];
+        _sizeofcmds = [cursor readLittleInt32];
+        _flags      = [cursor readLittleInt32];
+        if (_uses64BitABI) {
+            _reserved = [cursor readLittleInt32];
+        }
+    } else {
+        _cputype    = [cursor readBigInt32];
+        _cpusubtype = [cursor readBigInt32];
+        _filetype   = [cursor readBigInt32];
+        _ncmds      = [cursor readBigInt32];
+        _sizeofcmds = [cursor readBigInt32];
+        _flags      = [cursor readBigInt32];
+        if (_uses64BitABI) {
+            _reserved = [cursor readBigInt32];
+        }
+    }
+    
+    NSAssert(_uses64BitABI == CDArchUses64BitABI((CDArch){ .cputype = _cputype, .cpusubtype = _cpusubtype }), @"Header magic should match cpu arch", nil);
+    
+    NSUInteger headerOffset = _uses64BitABI ? sizeof(struct mach_header_64) : sizeof(struct mach_header);
+    CDMachOFileDataCursor *fileCursor = [[CDMachOFileDataCursor alloc] initWithFile:self offset:headerOffset];
+    [self _readLoadCommands:fileCursor count:_ncmds];
+
+    return self;
+}
+
 - (id)initWithData:(NSData *)data filename:(NSString *)filename searchPathState:(CDSearchPathState *)searchPathState;
 {
     if ((self = [super initWithData:data filename:filename searchPathState:searchPathState])) {
@@ -243,6 +294,10 @@ static NSString *CDMachOFileMagicNumberDescription(uint32_t magic)
         case MH_DYLIB_STUB:  return @"DYLIB_STUB";
         case MH_DSYM:        return @"DSYM";
         case MH_KEXT_BUNDLE: return @"KEXT_BUNDLE";
+        case MH_FILESET:     return @"FILESET";
+        case MH_GPU_EXECUTE: return @"GPU_EXECUTE";
+        case MH_GPU_DYLIB:   return @"GPU_DYLIB";
+
         default:
             break;
     }
@@ -276,6 +331,14 @@ static NSString *CDMachOFileMagicNumberDescription(uint32_t magic)
     if (flags & MH_SETUID_SAFE)             [setFlags addObject:@"SETUID_SAFE"];
     if (flags & MH_NO_REEXPORTED_DYLIBS)    [setFlags addObject:@"NO_REEXPORTED_DYLIBS"];
     if (flags & MH_PIE)                     [setFlags addObject:@"PIE"];
+    if (flags & MH_DEAD_STRIPPABLE_DYLIB)   [setFlags addObject:@"DEAD_STRIPPABLE_DYLIB"];
+    if (flags & MH_HAS_TLV_DESCRIPTORS)     [setFlags addObject:@"HAS_TLV_DESCRIPTORS"];
+    if (flags & MH_NO_HEAP_EXECUTION)       [setFlags addObject:@"NO_HEAP_EXECUTION"];
+    if (flags & MH_APP_EXTENSION_SAFE)      [setFlags addObject:@"APP_EXTENSION_SAFE"];
+    if (flags & MH_NLIST_OUTOFSYNC_WITH_DYLDINFO) [setFlags addObject:@"NLIST_OUTOFSYNC_WITH_DYLDINFO"];
+    if (flags & MH_SIM_SUPPORT)             [setFlags addObject:@"SIM_SUPPORT"];
+    if (flags & MH_IMPLICIT_PAGEZERO)       [setFlags addObject:@"IMPLICIT_PAGEZERO"];
+    if (flags & MH_DYLIB_IN_CACHE)          [setFlags addObject:@"DYLIB_IN_CACHE"];
 
     return [setFlags componentsJoinedByString:@" "];
 }
@@ -331,8 +394,8 @@ static NSString *CDMachOFileMagicNumberDescription(uint32_t magic)
 
     CDLCSegment *segment = [self segmentContainingAddress:address];
     if (segment == nil) {
-        NSLog(@"Error: Cannot find offset for address 0x%08lx in stringAtAddress:", address);
-        exit(5);
+        /*NSLog(@"Error: Cannot find offset for address 0x%08lx in stringAtAddress:", address);
+        exit(5);*/
         return nil;
     }
 
@@ -362,8 +425,9 @@ static NSString *CDMachOFileMagicNumberDescription(uint32_t magic)
 
     CDLCSegment *segment = [self segmentContainingAddress:address];
     if (segment == nil) {
-        NSLog(@"Error: Cannot find offset for address 0x%08lx in dataOffsetForAddress:", address);
-        exit(5);
+        /*NSLog(@"Error: Cannot find offset for address 0x%08lx in dataOffsetForAddress:", address);
+        exit(5);*/
+        return 0;
     }
 
 //    if ([segment isProtected]) {

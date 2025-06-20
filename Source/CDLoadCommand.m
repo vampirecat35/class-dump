@@ -97,6 +97,14 @@
 
         case LC_BUILD_VERSION:         targetClass = [CDLCBuildVersion class]; break;
 
+        case LC_DYLD_EXPORTS_TRIE:       targetClass = [CDLCLinkeditData class]; break;
+        case LC_DYLD_CHAINED_FIXUPS:     targetClass = [CDLCLinkeditData class]; break;
+        case LC_FILESET_ENTRY:           targetClass = [CDLCLinkeditData class]; break;
+        case LC_ATOM_INFO:               targetClass = [CDLCLinkeditData class]; break;
+        case LC_FUNCTION_VARIANTS:       targetClass = [CDLCLinkeditData class]; break;
+        case LC_FUNCTION_VARIANT_FIXUPS: targetClass = [CDLCLinkeditData class]; break;
+
+        case LC_TARGET_TRIPLE:
         case LC_LINKER_OPTION:
         case LC_LINKER_OPTIMIZATION_HINT:
         case LC_VERSION_MIN_TVOS:
@@ -208,6 +216,14 @@
         case LC_VERSION_MIN_WATCHOS:      return @"LC_VERSION_MIN_WATCHOS";
         case LC_NOTE:                     return @"LC_NOTE";
         case LC_BUILD_VERSION:            return @"LC_BUILD_VERSION";
+    
+        case LC_DYLD_EXPORTS_TRIE:        return @"LC_DYLD_EXPORTS_TRIE";
+        case LC_DYLD_CHAINED_FIXUPS:      return @"LC_DYLD_CHAINED_FIXUPS";
+        case LC_FILESET_ENTRY:            return @"LC_FILESET_ENTRY";
+        case LC_ATOM_INFO:                return @"LC_ATOM_INFO";
+        case LC_FUNCTION_VARIANTS:        return @"LC_FUNCTION_VARIANTS";
+        case LC_FUNCTION_VARIANT_FIXUPS:  return @"LC_FUNCTION_VARIANT_FIXUPS";
+        case LC_TARGET_TRIPLE:            return @"LC_TARGET_TRIPLE";
 
         default:
             break;

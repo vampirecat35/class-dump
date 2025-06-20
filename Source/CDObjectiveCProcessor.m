@@ -108,7 +108,10 @@
 
 - (CDOCClass *)classWithAddress:(uint64_t)address;
 {
-    return [_classesByAddress objectForKey:[NSNumber numberWithUnsignedLongLong:address]];
+    if (address != 0)
+        return [_classesByAddress objectForKey:[NSNumber numberWithUnsignedLongLong:address]];
+
+    return nil;
 }
 
 - (void)addClassesFromArray:(NSArray *)array;

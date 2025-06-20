@@ -6,6 +6,7 @@
 #import <XCTest/XCTest.h>
 
 #import "CDFatArch.h"
+#import "CDFatArch64.h"
 #import "CDFatFile.h"
 #import "CDMachOFile.h"
 

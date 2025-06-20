@@ -18,6 +18,8 @@
 #import "CDTypeController.h"
 #import "CDSearchPathState.h"
 
+#include <mach-o/dyld.h>
+
 NSString *CDErrorDomain_ClassDump = @"CDErrorDomain_ClassDump";
 
 NSString *CDErrorKey_Exception    = @"CDErrorKey_Exception";
@@ -200,6 +202,8 @@ NSString *CDErrorKey_Exception    = @"CDErrorKey_Exception";
 
     [visitor didEndVisiting];
 }
+
+extern intptr_t _dyld_get_image_slide(const struct mach_header* mh);
 
 - (CDMachOFile *)machOFileWithName:(NSString *)name;
 {

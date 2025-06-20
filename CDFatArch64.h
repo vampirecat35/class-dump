@@ -8,15 +8,15 @@
 @class CDDataCursor;
 @class CDFatFile, CDMachOFile;
 
-@interface CDFatArch : NSObject
+@interface CDFatArch64 : NSObject
 
 - (id)initWithMachOFile:(CDMachOFile *)machOFile bigendian:(bool)isBigEndian;
 - (id)initWithDataCursor:(CDDataCursor *)cursor bigendian:(bool)isBigEndian;
 
 @property (assign) cpu_type_t cputype;
 @property (assign) cpu_subtype_t cpusubtype;
-@property (assign) uint32_t offset;
-@property (assign) uint32_t size;
+@property (assign) uint64_t offset;
+@property (assign) uint64_t size;
 @property (assign) uint32_t align;
 
 @property (nonatomic, readonly) cpu_type_t maskedCPUType;

@@ -86,6 +86,8 @@ typedef enum : NSUInteger {
 
 - (CDLCDylib *)dylibLoadCommandForLibraryOrdinal:(NSUInteger)ordinal;
 
+- (id) initWithMachOData:(const struct mach_header *)data size:(size_t)length;
+
 @property (nonatomic, readonly) BOOL hasObjectiveC1Data;
 @property (nonatomic, readonly) BOOL hasObjectiveC2Data;
 @property (nonatomic, readonly) Class processorClass;

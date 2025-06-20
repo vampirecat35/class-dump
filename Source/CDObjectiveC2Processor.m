@@ -41,6 +41,10 @@
     CDMachOFileDataCursor *cursor = [[CDMachOFileDataCursor alloc] initWithSection:section];
     while ([cursor isAtEnd] == NO) {
         uint64_t val = [cursor readPtr];
+
+        if (val == 0)
+            return;
+
         CDOCClass *aClass = [self loadClassAtAddress:val];
         if (aClass != nil) {
             [self addClass:aClass withAddress:val];
@@ -70,7 +74,8 @@
         [self.protocolUniquer setProtocol:protocol withAddress:address];
         
         CDMachOFileDataCursor *cursor = [[CDMachOFileDataCursor alloc] initWithFile:self.machOFile address:address];
-        NSParameterAssert([cursor offset] != 0);
+        if ([cursor offset] == 0)
+            return nil;
         
         struct cd_objc2_protocol objc2Protocol;
         objc2Protocol.isa                     = [cursor readPtr];
@@ -91,7 +96,8 @@
             objc2Protocol.extendedMethodTypes = [cursor readPtr];
             if (objc2Protocol.extendedMethodTypes != 0) {
                 extendedMethodTypesCursor = [[CDMachOFileDataCursor alloc] initWithFile:self.machOFile address:objc2Protocol.extendedMethodTypes];
-                NSParameterAssert([extendedMethodTypesCursor offset] != 0);
+                if ([extendedMethodTypesCursor offset] == 0)
+                    return nil;
             }
         }
         
@@ -141,7 +147,8 @@
         return nil;
     
     CDMachOFileDataCursor *cursor = [[CDMachOFileDataCursor alloc] initWithFile:self.machOFile address:address];
-    NSParameterAssert([cursor offset] != 0);
+    if ([cursor offset] == 0)
+        return nil;
     
     struct cd_objc2_category objc2Category;
     objc2Category.name               = [cursor readPtr];
@@ -203,16 +210,17 @@
 {
     if (address == 0)
         return nil;
-    
+
     CDOCClass *class = [self classWithAddress:address];
     if (class)
         return class;
-    
+
     //NSLog(@"%s, address=%016lx", __cmd, address);
     
     CDMachOFileDataCursor *cursor = [[CDMachOFileDataCursor alloc] initWithFile:self.machOFile address:address];
-    NSParameterAssert([cursor offset] != 0);
-    
+    if ([cursor offset] == 0)
+        return nil;
+
     struct cd_objc2_class objc2Class;
     objc2Class.isa        = [cursor readPtr];
     objc2Class.superclass = [cursor readPtr];
@@ -229,7 +237,9 @@
     //NSLog(@"%016lx %016lx %016lx %016lx", objc2Class.isa, objc2Class.superclass, objc2Class.cache, objc2Class.vtable);
     //NSLog(@"%016lx %016lx %016lx %016lx", objc2Class.data, objc2Class.reserved1, objc2Class.reserved2, objc2Class.reserved3);
     
-    NSParameterAssert(objc2Class.data != 0);
+    if (objc2Class.data == 0)
+        return nil;
+
     [cursor setAddress:objc2Class.data];
 
     struct cd_objc2_class_ro_t objc2ClassData;
@@ -315,12 +325,14 @@
         struct cd_objc2_list_header listHeader;
         
         CDMachOFileDataCursor *cursor = [[CDMachOFileDataCursor alloc] initWithFile:self.machOFile address:address];
-        NSParameterAssert([cursor offset] != 0);
+        if ([cursor offset] == 0)
+            return nil;
+
         //NSLog(@"property list data offset: %lu", [cursor offset]);
         
         listHeader.entsize = [cursor readInt32];
         listHeader.count = [cursor readInt32];
-        NSParameterAssert(listHeader.entsize == 2 * [self.machOFile ptrSize]);
+        //NSParameterAssert(listHeader.entsize == 2 * [self.machOFile ptrSize]);
         
         for (uint32_t index = 0; index < listHeader.count; index++) {
             struct cd_objc2_property objc2Property;
@@ -345,7 +357,8 @@
         return nil;
     
     CDMachOFileDataCursor *cursor = [[CDMachOFileDataCursor alloc] initWithFile:self.machOFile address:address];
-    NSParameterAssert([cursor offset] != 0);
+    if ([cursor offset] == 0)
+        return nil;
     
     struct cd_objc2_class objc2Class;
     objc2Class.isa        = [cursor readPtr];
@@ -359,7 +372,9 @@
     //NSLog(@"%016lx %016lx %016lx %016lx", objc2Class.isa, objc2Class.superclass, objc2Class.cache, objc2Class.vtable);
     //NSLog(@"%016lx %016lx %016lx %016lx", objc2Class.data, objc2Class.reserved1, objc2Class.reserved2, objc2Class.reserved3);
     
-    NSParameterAssert(objc2Class.data != 0);
+    if (objc2Class.data == 0)
+        return nil;
+
     [cursor setAddress:objc2Class.data];
 
     struct cd_objc2_class_ro_t objc2ClassData;
@@ -393,7 +408,9 @@
     
     if (address != 0) {
         CDMachOFileDataCursor *cursor = [[CDMachOFileDataCursor alloc] initWithFile:self.machOFile address:address];
-        NSParameterAssert([cursor offset] != 0);
+        if ([cursor offset] == 0)
+            return nil;
+
         //NSLog(@"method list data offset: %lu", [cursor offset]);
         
         struct cd_objc2_list_header listHeader;
@@ -401,7 +418,7 @@
         // See getEntsize() from http://www.opensource.apple.com/source/objc4/objc4-532.2/runtime/objc-runtime-new.h
         listHeader.entsize = [cursor readInt32] & ~(uint32_t)3;
         listHeader.count   = [cursor readInt32];
-        NSParameterAssert(listHeader.entsize == 3 * [self.machOFile ptrSize]);
+        //NSParameterAssert(listHeader.entsize == 3 * [self.machOFile ptrSize]);
         
         for (uint32_t index = 0; index < listHeader.count; index++) {
             struct cd_objc2_method objc2Method;
@@ -435,14 +452,16 @@
     
     if (address != 0) {
         CDMachOFileDataCursor *cursor = [[CDMachOFileDataCursor alloc] initWithFile:self.machOFile address:address];
-        NSParameterAssert([cursor offset] != 0);
+        if ([cursor offset] == 0)
+            return nil;
+
         //NSLog(@"ivar list data offset: %lu", [cursor offset]);
         
         struct cd_objc2_list_header listHeader;
         
         listHeader.entsize = [cursor readInt32];
         listHeader.count = [cursor readInt32];
-        NSParameterAssert(listHeader.entsize == 3 * [self.machOFile ptrSize] + 2 * sizeof(uint32_t));
+        //NSParameterAssert(listHeader.entsize == 3 * [self.machOFile ptrSize] + 2 * sizeof(uint32_t));
         
         for (uint32_t index = 0; index < listHeader.count; index++) {
             struct cd_objc2_ivar objc2Ivar;

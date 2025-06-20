@@ -41,9 +41,23 @@ NSString *CDNameForCPUType(cpu_type_t cputype, cpu_subtype_t cpusubtype)
             }
             break;
         }
-        case CPU_TYPE_ARM | CPU_ARCH_ABI64: {
+        case CPU_TYPE_X86_64: {
             switch (cpusubtype) {
-                case CPU_SUBTYPE_ARM_ALL: return @"arm64"; // Not recognized in 10.8.4
+                case CPU_SUBTYPE_X86_64_ALL: return @"x86_64"; // Not recognized in 10.8.4
+                case CPU_SUBTYPE_X86_64_H:   return @"x86_64h"; // Not recognized in 10.8.4
+            }
+            break;
+        }
+        case CPU_TYPE_ARM64: {
+            switch (cpusubtype) {
+                case CPU_SUBTYPE_ARM64_ALL: return @"arm64"; // Not recognized in 10.8.4
+                case CPU_SUBTYPE_ARM64E:    return @"arm64e"; // Not recognized in 10.8.4
+            }
+            break;
+        }
+        case CPU_TYPE_ARM64_32: {
+            switch (cpusubtype) {
+                case CPU_SUBTYPE_ARM64_32_ALL: return @"arm64_32"; // Not recognized in 10.8.4
             }
             break;
         }
@@ -66,12 +80,27 @@ CDArch CDArchFromName(NSString *name)
 
     const NXArchInfo *archInfo = NXGetArchInfoFromName([name UTF8String]);
     if (archInfo == NULL) {
-        if ([name isEqualToString:@"armv7s"]) { // Not recognized in 10.8.4
+        if ([name isEqualToString:@"arm64"]) { // Not recognized in 10.8.4
+            arch.cputype    = CPU_TYPE_ARM64;
+            arch.cpusubtype = CPU_SUBTYPE_ARM64_ALL;
+        } else if ([name isEqualToString:@"arm64e"]) { // Not recognized in 10.8.4
+            arch.cputype    = CPU_TYPE_ARM64;
+            arch.cpusubtype = CPU_SUBTYPE_ARM64E;
+        } else if ([name isEqualToString:@"arm64_32"]) { // Not recognized in 10.8.4
+            arch.cputype    = CPU_TYPE_ARM64_32;
+            arch.cpusubtype = CPU_SUBTYPE_ARM64_32_ALL;
+        } else if ([name isEqualToString:@"armv7s"]) { // Not recognized in 10.8.4
             arch.cputype    = CPU_TYPE_ARM;
             arch.cpusubtype = 11;
-        } else if ([name isEqualToString:@"arm64"]) { // Not recognized in 10.8.4
-            arch.cputype    = CPU_TYPE_ARM | CPU_ARCH_ABI64;
-            arch.cpusubtype = CPU_SUBTYPE_ARM_ALL;
+        } else if ([name isEqualToString:@"x86_64"]) { // Not recognized in 10.8.4
+            arch.cputype    = CPU_TYPE_X86_64;
+            arch.cpusubtype = CPU_SUBTYPE_X86_64_ALL;
+        } else if ([name isEqualToString:@"x86_64h"]) { // Not recognized in 10.8.4
+            arch.cputype    = CPU_TYPE_X86_64;
+            arch.cpusubtype = CPU_SUBTYPE_X86_64_H;
+        } else if ([name isEqualToString:@"i386"]) { // Not recognized in 10.8.4
+            arch.cputype    = CPU_TYPE_I386;
+            arch.cpusubtype = CPU_SUBTYPE_I386_ALL;
         } else {
             NSString *ignore;
             
@@ -121,7 +150,12 @@ BOOL CDArchUses64BitLibraries(CDArch arch)
 // Returns CDFatFile or CDMachOFile
 + (id)fileWithContentsOfFile:(NSString *)filename searchPathState:(CDSearchPathState *)searchPathState;
 {
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 101000
+    NSData *data = [NSData dataWithContentsOfURL:[NSURL fileURLWithPath:filename] options:NSDataReadingMappedIfSafe error:nil];
+#else
     NSData *data = [NSData dataWithContentsOfMappedFile:filename];
+#endif
+
     CDFatFile *fatFile = [[CDFatFile alloc] initWithData:data filename:filename searchPathState:searchPathState];
     if (fatFile != nil)
         return fatFile;
