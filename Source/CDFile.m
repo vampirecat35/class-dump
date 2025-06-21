@@ -145,26 +145,37 @@ BOOL CDArchUses64BitLibraries(CDArch arch)
     NSString *_filename;
     NSData *_data;
     CDSearchPathState *_searchPathState;
+    BOOL isCache;
 }
 
 // Returns CDFatFile or CDMachOFile
-+ (id)fileWithContentsOfFile:(NSString *)filename searchPathState:(CDSearchPathState *)searchPathState;
++ (id)fileWithContentsOfFile:(NSString *)filename cache:(NSString *)cache searchPathState:(CDSearchPathState *)searchPathState isCache:(BOOL)aIsCache;
 {
 #if MAC_OS_X_VERSION_MIN_REQUIRED >= 101000
-    NSData *data = [NSData dataWithContentsOfURL:[NSURL fileURLWithPath:filename] options:NSDataReadingMappedIfSafe error:nil];
+    NSData *data = nil;
+
+    if (cache != nil)
+        data = [NSData dataWithContentsOfURL:[NSURL fileURLWithPath:cache] options:NSDataReadingMappedIfSafe error:nil];
+    else
+        data = [NSData dataWithContentsOfURL:[NSURL fileURLWithPath:filename] options:NSDataReadingMappedIfSafe error:nil];
 #else
-    NSData *data = [NSData dataWithContentsOfMappedFile:filename];
+    NSData *data = nil;
+
+    if (cache != nil)
+        data = [NSData dataWithContentsOfMappedFile:cache];
+    else
+        data = [NSData dataWithContentsOfMappedFile:filename];
 #endif
 
-    CDFatFile *fatFile = [[CDFatFile alloc] initWithData:data filename:filename searchPathState:searchPathState];
+    CDFatFile *fatFile = [[CDFatFile alloc] initWithData:data filename:filename searchPathState:searchPathState isCache:aIsCache];
     if (fatFile != nil)
         return fatFile;
     
-    CDMachOFile *machOFile = [[CDMachOFile alloc] initWithData:data filename:filename searchPathState:searchPathState];
+    CDMachOFile *machOFile = [[CDMachOFile alloc] initWithData:data filename:filename searchPathState:searchPathState isCache:aIsCache];
     return machOFile;
 }
 
-- (id)initWithData:(NSData *)data filename:(NSString *)filename searchPathState:(CDSearchPathState *)searchPathState;
+- (id)initWithData:(NSData *)data filename:(NSString *)filename searchPathState:(CDSearchPathState *)searchPathState isCache:(BOOL)aIsCache;
 {
     if ((self = [super init])) {
         // Otherwise reading the magic number fails.
@@ -175,6 +186,7 @@ BOOL CDArchUses64BitLibraries(CDArch arch)
         _filename        = filename;
         _data            = data;
         _searchPathState = searchPathState;
+        isCache          = aIsCache;
     }
 
     return self;

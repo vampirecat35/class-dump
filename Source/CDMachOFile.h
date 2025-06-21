@@ -88,6 +88,10 @@ typedef enum : NSUInteger {
 
 - (id) initWithMachOData:(const struct mach_header *)data size:(size_t)length;
 
+- (BOOL) _loadCacheInfo;
+- (NSUInteger) _cacheAddressForImage:(NSString *)fileName;
+- (NSUInteger) _cacheOffsetForAddress:(NSUInteger)address;
+
 @property (nonatomic, readonly) BOOL hasObjectiveC1Data;
 @property (nonatomic, readonly) BOOL hasObjectiveC2Data;
 @property (nonatomic, readonly) Class processorClass;

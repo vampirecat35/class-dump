@@ -29,9 +29,9 @@
     return self;
 }
 
-- (id)initWithData:(NSData *)data filename:(NSString *)filename searchPathState:(CDSearchPathState *)searchPathState;
+- (id)initWithData:(NSData *)data filename:(NSString *)filename searchPathState:(CDSearchPathState *)searchPathState isCache:(BOOL)aIsCache;
 {
-    if ((self = [super initWithData:data filename:filename searchPathState:searchPathState])) {
+    if ((self = [super initWithData:data filename:filename searchPathState:searchPathState isCache:aIsCache])) {
         CDDataCursor *cursor = [[CDDataCursor alloc] initWithData:data];
 
         struct fat_header header;

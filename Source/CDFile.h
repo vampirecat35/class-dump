@@ -21,9 +21,9 @@ BOOL CDArchUses64BitLibraries(CDArch arch);
 @interface CDFile : NSObject
 
 // Returns CDFatFile or CDMachOFile
-+ (id)fileWithContentsOfFile:(NSString *)filename searchPathState:(CDSearchPathState *)searchPathState;
++ (id)fileWithContentsOfFile:(NSString *)filename cache:(NSString *)cache searchPathState:(CDSearchPathState *)searchPathState isCache:(BOOL)aIsCache;
 
-- (id)initWithData:(NSData *)data filename:(NSString *)filename searchPathState:(CDSearchPathState *)searchPathState;
+- (id)initWithData:(NSData *)data filename:(NSString *)filename searchPathState:(CDSearchPathState *)searchPathState isCache:(BOOL)aIsCache;
 
 @property (readonly) NSString *filename;
 @property (readonly) NSData *data;

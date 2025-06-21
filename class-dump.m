@@ -39,6 +39,7 @@ void print_usage(void)
             "        -s             sort classes and categories by name\n"
             "        -S             sort methods by name\n"
             "        -t             suppress header in output, for testing\n"
+            "        --cache        use dyld shared cache\n"
             "        --list-arches  list the arches in the file, then exit\n"
             "        --sdk-ios      specify iOS SDK version (will look for /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS<version>.sdk\n"
             "                       or /Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS<version>.sdk)\n"
@@ -57,6 +58,8 @@ void print_usage(void)
 #define CD_OPT_SDK_MAC     5
 #define CD_OPT_SDK_ROOT    6
 #define CD_OPT_HIDE        7
+
+NSString *cacheName = nil;
 
 int main(int argc, char *argv[])
 {
@@ -91,6 +94,7 @@ int main(int argc, char *argv[])
             { "sdk-ios",                 required_argument, NULL, CD_OPT_SDK_IOS },
             { "sdk-mac",                 required_argument, NULL, CD_OPT_SDK_MAC },
             { "sdk-root",                required_argument, NULL, CD_OPT_SDK_ROOT },
+            { "cache",                   required_argument, NULL, 'c' },
             { "hide",                    required_argument, NULL, CD_OPT_HIDE },
             { NULL,                      0,                 NULL, 0 },
         };
@@ -102,7 +106,7 @@ int main(int argc, char *argv[])
 
         CDClassDump *classDump = [[CDClassDump alloc] init];
 
-        while ( (ch = getopt_long(argc, argv, "aAC:f:HIo:rRsSt", longopts, NULL)) != -1) {
+        while ( (ch = getopt_long(argc, argv, "aAC:f:HIo:rRsStc:", longopts, NULL)) != -1) {
             switch (ch) {
                 case CD_OPT_ARCH: {
                     NSString *name = [NSString stringWithUTF8String:optarg];
@@ -194,7 +198,12 @@ int main(int argc, char *argv[])
                     // Last one wins now.
                     break;
                 }
-                    
+                
+                case 'c': {
+                    cacheName = [NSString stringWithUTF8String:optarg];
+                    break;
+                }
+
                 case 'f': {
                     searchString = [NSString stringWithUTF8String:optarg];
                     break;
@@ -254,7 +263,8 @@ int main(int argc, char *argv[])
                 } else {
                     CDSearchPathState *searchPathState = [[CDSearchPathState alloc] init];
                     searchPathState.executablePath = executablePath;
-                    id macho = [CDFile fileWithContentsOfFile:executablePath searchPathState:searchPathState];
+                    id macho = [CDFile fileWithContentsOfFile:executablePath cache:nil searchPathState:searchPathState isCache:NO];
+
                     if (macho == nil) {
                         printf("none\n");
                     } else {
@@ -272,10 +282,11 @@ int main(int argc, char *argv[])
                 }
 
                 classDump.searchPathState.executablePath = [executablePath stringByDeletingLastPathComponent];
-                CDFile *file = [CDFile fileWithContentsOfFile:executablePath searchPathState:classDump.searchPathState];
+                CDFile *file = [CDFile fileWithContentsOfFile:executablePath cache:nil searchPathState:classDump.searchPathState isCache:NO];
+
                 if (file == nil) {
                     NSFileManager *defaultManager = [NSFileManager defaultManager];
-                    
+
                     if ([defaultManager fileExistsAtPath:executablePath]) {
                         if ([defaultManager isReadableFileAtPath:executablePath]) {
                             fprintf(stderr, "class-dump: Input file (%s) is neither a Mach-O file nor a fat archive.\n", [executablePath UTF8String]);
@@ -333,4 +344,6 @@ int main(int argc, char *argv[])
         }
         exit(0); // avoid costly autorelease pool drain, we’re exiting anyway
     }
+
+    return 0;
 }

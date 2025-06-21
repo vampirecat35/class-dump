@@ -13,6 +13,7 @@
 @property (nonatomic, readonly) NSArray *archNames;
 @property (nonatomic, readonly) bool isFat64;
 @property (nonatomic, readonly) bool isSwapped;
+@property (readonly) BOOL isCache;
 
 - (void)addArchitecture:(CDFatArch *)fatArch;
 - (void)addArchitecture64:(CDFatArch64 *)fatArch;

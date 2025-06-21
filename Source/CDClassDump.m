@@ -24,6 +24,8 @@ NSString *CDErrorDomain_ClassDump = @"CDErrorDomain_ClassDump";
 
 NSString *CDErrorKey_Exception    = @"CDErrorKey_Exception";
 
+extern NSString *cacheName;
+
 @interface CDClassDump ()
 @end
 
@@ -236,7 +238,13 @@ extern intptr_t _dyld_get_image_slide(const struct mach_header* mh);
 
     CDMachOFile *machOFile = _machOFilesByName[adjustedName];
     if (machOFile == nil) {
-        CDFile *file = [CDFile fileWithContentsOfFile:adjustedName searchPathState:self.searchPathState];
+        CDFile *file = nil;
+
+        if (cacheName != nil)
+            file = [CDFile fileWithContentsOfFile:adjustedName cache:cacheName searchPathState:self.searchPathState isCache:YES];
+
+        if (file == nil)
+            file = [CDFile fileWithContentsOfFile:adjustedName cache:nil searchPathState:self.searchPathState isCache:NO];
 
         if (file == nil || [self loadFile:file error:NULL] == NO)
             NSLog(@"Warning: Failed to load: %@", adjustedName);
